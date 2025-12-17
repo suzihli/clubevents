@@ -5,20 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Club Events Board</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; }
+        body { font-family: 'Lora', serif; }
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 2px;
         }
         .calendar-day {
-            min-height: 80px;
+            min-height: 120px;
             padding: 4px;
             background: white;
             border: 1px solid #e5e7eb;
-            cursor: pointer;
-            transition: background 0.2s;
+            overflow-y: auto;
         }
         .calendar-day:hover {
             background: #f9fafb;
@@ -34,13 +36,15 @@
         .calendar-day.has-events {
             background: #dbeafe;
         }
-        .event-dot {
-            width: 6px;
-            height: 6px;
+        .calendar-event {
             background: #6366f1;
-            border-radius: 50%;
-            display: inline-block;
-            margin: 1px;
+            color: white;
+            padding: 4px 6px;
+            margin: 2px 0;
+            border-radius: 4px;
+            font-size: 11px;
+            line-height: 1.3;
+            cursor: default;
         }
     </style>
 </head>
@@ -106,7 +110,7 @@
                             <input type="date" id="eventDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Event Time *</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Event Time (EST) *</label>
                             <input type="time" id="eventTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
                         </div>
                     </div>
@@ -148,7 +152,6 @@
                     </div>
                     <div id="calendarDays" class="calendar-grid"></div>
                 </div>
-                <div id="selectedDateEvents"></div>
             </div>
 
             <!-- Events List -->
@@ -159,7 +162,7 @@
     <script>
         // ⚠️ IMPORTANT: CHANGE THESE PASSWORDS! ⚠️
         const CORRECT_PASSWORD = 'HLIclubs';
-        const ADMIN_PASSWORD = 'AdminHLI';
+        const ADMIN_PASSWORD = '@dmin';
         
         let events = [];
         let isLoggedIn = false;
@@ -285,7 +288,7 @@
                 }
                 
                 const dayEvents = events.filter(e => {
-                    const eventDate = new Date(e.eventDate);
+                    const eventDate = new Date(e.eventDate + 'T00:00:00');
                     return eventDate.getFullYear() === year && 
                            eventDate.getMonth() === month && 
                            eventDate.getDate() === day;
@@ -293,14 +296,27 @@
                 
                 if (dayEvents.length > 0) {
                     cell.classList.add('has-events');
-                    const dotsContainer = document.createElement('div');
-                    dotsContainer.className = 'mt-1';
-                    for (let i = 0; i < Math.min(dayEvents.length, 3); i++) {
-                        const dot = document.createElement('span');
-                        dot.className = 'event-dot';
-                        dotsContainer.appendChild(dot);
-                    }
-                    cell.appendChild(dotsContainer);
+                    dayEvents.forEach(event => {
+                        const eventDiv = document.createElement('div');
+                        eventDiv.className = 'calendar-event';
+                        
+                        const clubLine = document.createElement('div');
+                        clubLine.className = 'font-semibold';
+                        clubLine.textContent = `${convertTo12Hour(event.eventTime)} - ${event.clubName}`;
+                        eventDiv.appendChild(clubLine);
+                        
+                        const entertainmentLine = document.createElement('div');
+                        entertainmentLine.className = 'text-xs opacity-90';
+                        entertainmentLine.textContent = `🎵 ${event.entertainment}`;
+                        eventDiv.appendChild(entertainmentLine);
+                        
+                        const catererLine = document.createElement('div');
+                        catererLine.className = 'text-xs opacity-90';
+                        catererLine.textContent = `🍽️ ${event.caterer}`;
+                        eventDiv.appendChild(catererLine);
+                        
+                        cell.appendChild(eventDiv);
+                    });
                 }
                 
                 calendarDays.appendChild(cell);
@@ -323,88 +339,15 @@
             }
             
             const dayNum = document.createElement('div');
-            dayNum.className = 'font-semibold text-sm';
+            dayNum.className = 'font-semibold text-sm mb-1';
             dayNum.textContent = day;
             cell.appendChild(dayNum);
-            
-            cell.onclick = () => showDayEvents(year, month, day);
             
             return cell;
         }
 
         function showDayEvents(year, month, day) {
-            selectedDate = new Date(year, month, day);
-            const dayEvents = events.filter(e => {
-                const eventDate = new Date(e.eventDate);
-                return eventDate.getFullYear() === year && 
-                       eventDate.getMonth() === month && 
-                       eventDate.getDate() === day;
-            });
-            
-            const container = document.getElementById('selectedDateEvents');
-            
-            if (dayEvents.length === 0) {
-                container.innerHTML = `
-                    <div class="bg-white rounded-lg shadow-lg p-8 text-center">
-                        <p class="text-gray-600">No events on ${selectedDate.toLocaleDateString('en-US', { 
-                            weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' 
-                        })}</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = `
-                <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4">
-                        Events on ${selectedDate.toLocaleDateString('en-US', { 
-                            weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' 
-                        })}
-                    </h3>
-                </div>
-            ` + dayEvents.map(event => `
-                <div class="bg-white rounded-lg shadow-lg p-6 mb-4 hover:shadow-xl transition">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="text-2xl font-bold text-gray-800">${event.clubName}</h3>
-                        </div>
-                        ${isAdmin ? `
-                            <button onclick="deleteEvent(${event.id})" class="text-red-500 hover:text-red-700 transition" title="Delete event">
-                                🗑️
-                            </button>
-                        ` : ''}
-                    </div>
-                    
-                    <div class="flex items-center gap-2 text-gray-700 mb-4">
-                        <span class="text-indigo-600">🕐</span>
-                        <div class="font-medium">${event.eventTime}</div>
-                    </div>
-                    
-                    <div class="grid md:grid-cols-2 gap-4 mb-4">
-                        <div class="flex items-start gap-2 text-gray-700">
-                            <span class="text-indigo-600 mt-1">🎵</span>
-                            <div>
-                                <div class="text-sm text-gray-600">Entertainment</div>
-                                <div class="font-medium">${event.entertainment}</div>
-                            </div>
-                        </div>
-                        <div class="flex items-start gap-2 text-gray-700">
-                            <span class="text-indigo-600 mt-1">🍽️</span>
-                            <div>
-                                <div class="text-sm text-gray-600">Caterer</div>
-                                <div class="font-medium">${event.caterer}</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    ${event.notes ? `
-                        <div class="mt-4 pt-4 border-t border-gray-200">
-                            <p class="text-sm text-gray-600 font-medium mb-1">Additional Notes:</p>
-                            <p class="text-gray-700">${event.notes}</p>
-                        </div>
-                    ` : ''}
-                </div>
-            `).join('');
+            // This function is no longer needed for calendar view
         }
 
         function toggleForm() {
@@ -458,7 +401,7 @@
             };
 
             events.push(newEvent);
-            events.sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
+            events.sort((a, b) => new Date(a.eventDate + 'T' + a.eventTime) - new Date(b.eventDate + 'T' + b.eventTime));
             saveEvents();
             
             if (currentView === 'calendar') {
@@ -483,13 +426,18 @@
                 saveEvents();
                 if (currentView === 'calendar') {
                     renderCalendar();
-                    if (selectedDate) {
-                        showDayEvents(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-                    }
                 } else {
                     renderEvents();
                 }
             }
+        }
+
+        function convertTo12Hour(time24) {
+            const [hours, minutes] = time24.split(':');
+            const h = parseInt(hours);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const h12 = h % 12 || 12;
+            return `${h12}:${minutes} ${ampm}`;
         }
 
         function formatDate(dateStr) {
@@ -531,8 +479,7 @@
                     <div class="flex items-center gap-2 text-gray-700 mb-4">
                         <span class="text-indigo-600">📅</span>
                         <div>
-                            <div class="font-medium">${formatDate(event.eventDate)}</div>
-                            <div class="text-sm text-gray-600">${event.eventTime}</div>
+                            <div class="font-medium">${formatDate(event.eventDate)} at ${convertTo12Hour(event.eventTime)} EST</div>
                         </div>
                     </div>
                     
