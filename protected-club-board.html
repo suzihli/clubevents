@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Club Events Board</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center">Club Events Board</h1>
+            <p class="text-gray-600 text-center mb-6">Enter password to access</p>
+            <div class="space-y-4">
+                <input 
+                    type="password" 
+                    id="passwordInput" 
+                    placeholder="Password"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+                <button 
+                    onclick="login()" 
+                    class="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition"
+                >
+                    Login
+                </button>
+                <p id="loginError" class="text-red-500 text-sm text-center hidden">Incorrect password</p>
+            </div>
+            <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                <p class="text-sm text-gray-600 font-medium mb-2">Setup Instructions:</p>
+                <ol class="text-xs text-gray-600 space-y-1 list-decimal list-inside">
+                    <li>Change the password in the code (search for "CHANGE_THIS_PASSWORD")</li>
+                    <li>Save this file as "club-events.html"</li>
+                    <li>Share the file or host it on your website</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden p-4 md:p-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <div class="flex items-center justify-between mb-2">
+                    <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">
+                        📅 Club Events Board
+                    </h1>
+                    <div class="flex gap-2">
+                        <button onclick="toggleForm()" id="toggleBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                            ➕ Submit Event
+                        </button>
+                        <button onclick="logout()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+                <p class="text-gray-600">Shared board for all club presidents to coordinate events</p>
+            </div>
+
+            <!-- Submission Form -->
+            <div id="submissionForm" class="bg-white rounded-lg shadow-lg p-6 mb-6 hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Submit New Event</h2>
+                <div class="space-y-4">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Club Name *</label>
+                            <input type="text" id="clubName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="e.g., Lions Club">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">President Name *</label>
+                            <input type="text" id="presidentName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Event Date *</label>
+                            <input type="date" id="eventDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Event Time *</label>
+                            <input type="time" id="eventTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Event Name *</label>
+                        <input type="text" id="eventName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="e.g., Annual Fundraiser Gala">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Entertainment *</label>
+                        <input type="text" id="entertainment" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="e.g., Live Jazz Band, DJ Sarah Martinez">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Caterer *</label>
+                        <input type="text" id="caterer" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="e.g., Gourmet Events Catering">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
+                        <textarea id="notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Any additional details..."></textarea>
+                    </div>
+                    <button onclick="submitEvent()" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition">
+                        Submit Event
+                    </button>
+                </div>
+            </div>
+
+            <!-- Events List -->
+            <div id="eventsList"></div>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ IMPORTANT: CHANGE THIS PASSWORD! ⚠️
+        const CORRECT_PASSWORD = 'HLIClubs';
+        
+        let events = [];
+        let isLoggedIn = false;
+
+        // Check for saved login
+        if (sessionStorage.getItem('clubBoardAuth') === 'true') {
+            isLoggedIn = true;
+            showMainApp();
+        }
+
+        function login() {
+            const input = document.getElementById('passwordInput').value;
+            if (input === CORRECT_PASSWORD) {
+                isLoggedIn = true;
+                sessionStorage.setItem('clubBoardAuth', 'true');
+                document.getElementById('loginError').classList.add('hidden');
+                showMainApp();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            isLoggedIn = false;
+            sessionStorage.removeItem('clubBoardAuth');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            loadEvents();
+            renderEvents();
+        }
+
+        // Allow Enter key to login
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordInput = document.getElementById('passwordInput');
+            if (passwordInput) {
+                passwordInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') login();
+                });
+            }
+        });
+
+        function toggleForm() {
+            const form = document.getElementById('submissionForm');
+            const btn = document.getElementById('toggleBtn');
+            if (form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+                btn.textContent = '✖ Cancel';
+                btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                btn.classList.add('bg-gray-500', 'hover:bg-gray-600');
+            } else {
+                form.classList.add('hidden');
+                btn.textContent = '➕ Submit Event';
+                btn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
+                btn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            }
+        }
+
+        function loadEvents() {
+            const stored = localStorage.getItem('clubEvents');
+            events = stored ? JSON.parse(stored) : [];
+            events.sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
+        }
+
+        function saveEvents() {
+            localStorage.setItem('clubEvents', JSON.stringify(events));
+        }
+
+        function submitEvent() {
+            const clubName = document.getElementById('clubName').value;
+            const presidentName = document.getElementById('presidentName').value;
+            const eventDate = document.getElementById('eventDate').value;
+            const eventTime = document.getElementById('eventTime').value;
+            const eventName = document.getElementById('eventName').value;
+            const entertainment = document.getElementById('entertainment').value;
+            const caterer = document.getElementById('caterer').value;
+            const notes = document.getElementById('notes').value;
+
+            if (!clubName || !presidentName || !eventDate || !eventTime || !eventName || !entertainment || !caterer) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const newEvent = {
+                id: Date.now(),
+                clubName,
+                presidentName,
+                eventDate,
+                eventTime,
+                eventName,
+                entertainment,
+                caterer,
+                notes,
+                submittedAt: new Date().toISOString()
+            };
+
+            events.push(newEvent);
+            events.sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
+            saveEvents();
+            renderEvents();
+            
+            // Clear form
+            document.getElementById('clubName').value = '';
+            document.getElementById('presidentName').value = '';
+            document.getElementById('eventDate').value = '';
+            document.getElementById('eventTime').value = '';
+            document.getElementById('eventName').value = '';
+            document.getElementById('entertainment').value = '';
+            document.getElementById('caterer').value = '';
+            document.getElementById('notes').value = '';
+            toggleForm();
+        }
+
+        function deleteEvent(id) {
+            if (confirm('Are you sure you want to delete this event?')) {
+                events = events.filter(e => e.id !== id);
+                saveEvents();
+                renderEvents();
+            }
+        }
+
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        function renderEvents() {
+            const container = document.getElementById('eventsList');
+            
+            if (events.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-lg shadow-lg p-12 text-center">
+                        <div class="text-6xl mb-4">📅</div>
+                        <p class="text-gray-600 text-lg">No events submitted yet</p>
+                        <p class="text-gray-500 mt-2">Be the first to add an upcoming event!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = events.map(event => `
+                <div class="bg-white rounded-lg shadow-lg p-6 mb-4 hover:shadow-xl transition">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-800">${event.eventName}</h3>
+                            <p class="text-indigo-600 font-medium">${event.clubName}</p>
+                        </div>
+                        <button onclick="deleteEvent(${event.id})" class="text-red-500 hover:text-red-700 transition" title="Delete event">
+                            🗑️
+                        </button>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div class="flex items-center gap-2 text-gray-700">
+                            <span class="text-indigo-600">📅</span>
+                            <div>
+                                <div class="font-medium">${formatDate(event.eventDate)}</div>
+                                <div class="text-sm text-gray-600">${event.eventTime}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-gray-700">
+                            <span class="text-indigo-600">👤</span>
+                            <div>
+                                <div class="text-sm text-gray-600">President</div>
+                                <div class="font-medium">${event.presidentName}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div class="flex items-start gap-2 text-gray-700">
+                            <span class="text-indigo-600">🎵</span>
+                            <div>
+                                <div class="text-sm text-gray-600">Entertainment</div>
+                                <div class="font-medium">${event.entertainment}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 text-gray-700">
+                            <span class="text-indigo-600">🍽️</span>
+                            <div>
+                                <div class="text-sm text-gray-600">Caterer</div>
+                                <div class="font-medium">${event.caterer}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${event.notes ? `
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                            <p class="text-sm text-gray-600 font-medium mb-1">Additional Notes:</p>
+                            <p class="text-gray-700">${event.notes}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="mt-4 pt-4 border-t border-gray-200 text-xs text-gray-500">
+                        Submitted ${new Date(event.submittedAt).toLocaleString()}
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
