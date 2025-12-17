@@ -30,14 +30,6 @@
                 </button>
                 <p id="loginError" class="text-red-500 text-sm text-center hidden">Incorrect password</p>
             </div>
-            <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                <p class="text-sm text-gray-600 font-medium mb-2">Setup Instructions:</p>
-                <ol class="text-xs text-gray-600 space-y-1 list-decimal list-inside">
-                    <li>Change the password in the code (search for "CHANGE_THIS_PASSWORD")</li>
-                    <li>Save this file as "club-events.html"</li>
-                    <li>Share the file or host it on your website</li>
-                </ol>
-            </div>
         </div>
     </div>
 
@@ -66,15 +58,9 @@
             <div id="submissionForm" class="bg-white rounded-lg shadow-lg p-6 mb-6 hidden">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">Submit New Event</h2>
                 <div class="space-y-4">
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Club Name *</label>
-                            <input type="text" id="clubName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="e.g., Lions Club">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">President Name *</label>
-                            <input type="text" id="presidentName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                        </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Club Name *</label>
+                        <input type="text" id="clubName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="e.g., Lions Club">
                     </div>
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
@@ -86,10 +72,7 @@
                             <input type="time" id="eventTime" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Event Name *</label>
-                        <input type="text" id="eventName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="e.g., Annual Fundraiser Gala">
-                    </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Entertainment *</label>
                         <input type="text" id="entertainment" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="e.g., Live Jazz Band, DJ Sarah Martinez">
@@ -115,7 +98,7 @@
 
     <script>
         // ⚠️ IMPORTANT: CHANGE THIS PASSWORD! ⚠️
-        const CORRECT_PASSWORD = 'HLIClubs';
+        const CORRECT_PASSWORD = 'CHANGE_THIS_PASSWORD';
         
         let events = [];
         let isLoggedIn = false;
@@ -190,15 +173,13 @@
 
         function submitEvent() {
             const clubName = document.getElementById('clubName').value;
-            const presidentName = document.getElementById('presidentName').value;
             const eventDate = document.getElementById('eventDate').value;
             const eventTime = document.getElementById('eventTime').value;
-            const eventName = document.getElementById('eventName').value;
             const entertainment = document.getElementById('entertainment').value;
             const caterer = document.getElementById('caterer').value;
             const notes = document.getElementById('notes').value;
 
-            if (!clubName || !presidentName || !eventDate || !eventTime || !eventName || !entertainment || !caterer) {
+            if (!clubName || !eventDate || !eventTime || !entertainment || !caterer) {
                 alert('Please fill in all required fields');
                 return;
             }
@@ -206,10 +187,8 @@
             const newEvent = {
                 id: Date.now(),
                 clubName,
-                presidentName,
                 eventDate,
                 eventTime,
-                eventName,
                 entertainment,
                 caterer,
                 notes,
@@ -223,10 +202,8 @@
             
             // Clear form
             document.getElementById('clubName').value = '';
-            document.getElementById('presidentName').value = '';
             document.getElementById('eventDate').value = '';
             document.getElementById('eventTime').value = '';
-            document.getElementById('eventName').value = '';
             document.getElementById('entertainment').value = '';
             document.getElementById('caterer').value = '';
             document.getElementById('notes').value = '';
@@ -268,28 +245,18 @@
                 <div class="bg-white rounded-lg shadow-lg p-6 mb-4 hover:shadow-xl transition">
                     <div class="flex justify-between items-start mb-4">
                         <div>
-                            <h3 class="text-2xl font-bold text-gray-800">${event.eventName}</h3>
-                            <p class="text-indigo-600 font-medium">${event.clubName}</p>
+                            <h3 class="text-2xl font-bold text-gray-800">${event.clubName}</h3>
                         </div>
                         <button onclick="deleteEvent(${event.id})" class="text-red-500 hover:text-red-700 transition" title="Delete event">
                             🗑️
                         </button>
                     </div>
                     
-                    <div class="grid md:grid-cols-2 gap-4 mb-4">
-                        <div class="flex items-center gap-2 text-gray-700">
-                            <span class="text-indigo-600">📅</span>
-                            <div>
-                                <div class="font-medium">${formatDate(event.eventDate)}</div>
-                                <div class="text-sm text-gray-600">${event.eventTime}</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2 text-gray-700">
-                            <span class="text-indigo-600">👤</span>
-                            <div>
-                                <div class="text-sm text-gray-600">President</div>
-                                <div class="font-medium">${event.presidentName}</div>
-                            </div>
+                    <div class="flex items-center gap-2 text-gray-700 mb-4">
+                        <span class="text-indigo-600">📅</span>
+                        <div>
+                            <div class="font-medium">${formatDate(event.eventDate)}</div>
+                            <div class="text-sm text-gray-600">${event.eventTime}</div>
                         </div>
                     </div>
                     
