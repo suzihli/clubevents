@@ -7,6 +7,41 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+        .calendar-day {
+            min-height: 80px;
+            padding: 4px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .calendar-day:hover {
+            background: #f9fafb;
+        }
+        .calendar-day.other-month {
+            background: #f9fafb;
+            color: #9ca3af;
+        }
+        .calendar-day.today {
+            background: #eef2ff;
+            border: 2px solid #6366f1;
+        }
+        .calendar-day.has-events {
+            background: #dbeafe;
+        }
+        .event-dot {
+            width: 6px;
+            height: 6px;
+            background: #6366f1;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 1px;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
@@ -43,6 +78,9 @@
                         📅 Club Events Board
                     </h1>
                     <div class="flex gap-2">
+                        <button onclick="toggleView()" id="viewBtn" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+                            📋 List View
+                        </button>
                         <button onclick="toggleForm()" id="toggleBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
                             ➕ Submit Event
                         </button>
@@ -91,29 +129,66 @@
                 </div>
             </div>
 
+            <!-- Calendar View -->
+            <div id="calendarView" class="hidden">
+                <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <button onclick="changeMonth(-1)" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">← Prev</button>
+                        <h2 id="calendarMonth" class="text-2xl font-bold text-gray-800"></h2>
+                        <button onclick="changeMonth(1)" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Next →</button>
+                    </div>
+                    <div class="calendar-grid">
+                        <div class="text-center font-bold text-gray-600 py-2">Sun</div>
+                        <div class="text-center font-bold text-gray-600 py-2">Mon</div>
+                        <div class="text-center font-bold text-gray-600 py-2">Tue</div>
+                        <div class="text-center font-bold text-gray-600 py-2">Wed</div>
+                        <div class="text-center font-bold text-gray-600 py-2">Thu</div>
+                        <div class="text-center font-bold text-gray-600 py-2">Fri</div>
+                        <div class="text-center font-bold text-gray-600 py-2">Sat</div>
+                    </div>
+                    <div id="calendarDays" class="calendar-grid"></div>
+                </div>
+                <div id="selectedDateEvents"></div>
+            </div>
+
             <!-- Events List -->
             <div id="eventsList"></div>
         </div>
     </div>
 
     <script>
-        // ⚠️ IMPORTANT: CHANGE THIS PASSWORD! ⚠️
-        const CORRECT_PASSWORD = 'CHANGE_THIS_PASSWORD';
+        // ⚠️ IMPORTANT: CHANGE THESE PASSWORDS! ⚠️
+        const CORRECT_PASSWORD = 'HLIclubs';
+        const ADMIN_PASSWORD = 'AdminHLI';
         
         let events = [];
         let isLoggedIn = false;
+        let isAdmin = false;
+        let currentView = 'list'; // 'list' or 'calendar'
+        let currentMonth = new Date();
+        let selectedDate = null;
 
         // Check for saved login
         if (sessionStorage.getItem('clubBoardAuth') === 'true') {
             isLoggedIn = true;
+            isAdmin = sessionStorage.getItem('clubBoardAdmin') === 'true';
             showMainApp();
         }
 
         function login() {
             const input = document.getElementById('passwordInput').value;
-            if (input === CORRECT_PASSWORD) {
+            if (input === ADMIN_PASSWORD) {
                 isLoggedIn = true;
+                isAdmin = true;
                 sessionStorage.setItem('clubBoardAuth', 'true');
+                sessionStorage.setItem('clubBoardAdmin', 'true');
+                document.getElementById('loginError').classList.add('hidden');
+                showMainApp();
+            } else if (input === CORRECT_PASSWORD) {
+                isLoggedIn = true;
+                isAdmin = false;
+                sessionStorage.setItem('clubBoardAuth', 'true');
+                sessionStorage.setItem('clubBoardAdmin', 'false');
                 document.getElementById('loginError').classList.add('hidden');
                 showMainApp();
             } else {
@@ -123,7 +198,9 @@
 
         function logout() {
             isLoggedIn = false;
+            isAdmin = false;
             sessionStorage.removeItem('clubBoardAuth');
+            sessionStorage.removeItem('clubBoardAdmin');
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('mainApp').classList.add('hidden');
         }
@@ -132,7 +209,11 @@
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             loadEvents();
-            renderEvents();
+            if (currentView === 'calendar') {
+                renderCalendar();
+            } else {
+                renderEvents();
+            }
         }
 
         // Allow Enter key to login
@@ -144,6 +225,187 @@
                 });
             }
         });
+
+        function toggleView() {
+            currentView = currentView === 'list' ? 'calendar' : 'list';
+            const viewBtn = document.getElementById('viewBtn');
+            const calendarView = document.getElementById('calendarView');
+            const listView = document.getElementById('eventsList');
+            
+            if (currentView === 'calendar') {
+                viewBtn.textContent = '📋 List View';
+                calendarView.classList.remove('hidden');
+                listView.classList.add('hidden');
+                renderCalendar();
+            } else {
+                viewBtn.textContent = '📅 Calendar View';
+                calendarView.classList.add('hidden');
+                listView.classList.remove('hidden');
+                renderEvents();
+            }
+        }
+
+        function changeMonth(delta) {
+            currentMonth.setMonth(currentMonth.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            
+            document.getElementById('calendarMonth').textContent = 
+                currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+            
+            const calendarDays = document.getElementById('calendarDays');
+            calendarDays.innerHTML = '';
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Previous month days
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                const cell = createCalendarDay(day, true, year, month - 1);
+                calendarDays.appendChild(cell);
+            }
+            
+            // Current month days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const cell = createCalendarDay(day, false, year, month);
+                const cellDate = new Date(year, month, day);
+                cellDate.setHours(0, 0, 0, 0);
+                
+                if (cellDate.getTime() === today.getTime()) {
+                    cell.classList.add('today');
+                }
+                
+                const dayEvents = events.filter(e => {
+                    const eventDate = new Date(e.eventDate);
+                    return eventDate.getFullYear() === year && 
+                           eventDate.getMonth() === month && 
+                           eventDate.getDate() === day;
+                });
+                
+                if (dayEvents.length > 0) {
+                    cell.classList.add('has-events');
+                    const dotsContainer = document.createElement('div');
+                    dotsContainer.className = 'mt-1';
+                    for (let i = 0; i < Math.min(dayEvents.length, 3); i++) {
+                        const dot = document.createElement('span');
+                        dot.className = 'event-dot';
+                        dotsContainer.appendChild(dot);
+                    }
+                    cell.appendChild(dotsContainer);
+                }
+                
+                calendarDays.appendChild(cell);
+            }
+            
+            // Next month days
+            const totalCells = calendarDays.children.length;
+            const remainingCells = 42 - totalCells;
+            for (let day = 1; day <= remainingCells; day++) {
+                const cell = createCalendarDay(day, true, year, month + 1);
+                calendarDays.appendChild(cell);
+            }
+        }
+
+        function createCalendarDay(day, isOtherMonth, year, month) {
+            const cell = document.createElement('div');
+            cell.className = 'calendar-day';
+            if (isOtherMonth) {
+                cell.classList.add('other-month');
+            }
+            
+            const dayNum = document.createElement('div');
+            dayNum.className = 'font-semibold text-sm';
+            dayNum.textContent = day;
+            cell.appendChild(dayNum);
+            
+            cell.onclick = () => showDayEvents(year, month, day);
+            
+            return cell;
+        }
+
+        function showDayEvents(year, month, day) {
+            selectedDate = new Date(year, month, day);
+            const dayEvents = events.filter(e => {
+                const eventDate = new Date(e.eventDate);
+                return eventDate.getFullYear() === year && 
+                       eventDate.getMonth() === month && 
+                       eventDate.getDate() === day;
+            });
+            
+            const container = document.getElementById('selectedDateEvents');
+            
+            if (dayEvents.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-lg shadow-lg p-8 text-center">
+                        <p class="text-gray-600">No events on ${selectedDate.toLocaleDateString('en-US', { 
+                            weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' 
+                        })}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">
+                        Events on ${selectedDate.toLocaleDateString('en-US', { 
+                            weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' 
+                        })}
+                    </h3>
+                </div>
+            ` + dayEvents.map(event => `
+                <div class="bg-white rounded-lg shadow-lg p-6 mb-4 hover:shadow-xl transition">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-800">${event.clubName}</h3>
+                        </div>
+                        ${isAdmin ? `
+                            <button onclick="deleteEvent(${event.id})" class="text-red-500 hover:text-red-700 transition" title="Delete event">
+                                🗑️
+                            </button>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="flex items-center gap-2 text-gray-700 mb-4">
+                        <span class="text-indigo-600">🕐</span>
+                        <div class="font-medium">${event.eventTime}</div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div class="flex items-start gap-2 text-gray-700">
+                            <span class="text-indigo-600 mt-1">🎵</span>
+                            <div>
+                                <div class="text-sm text-gray-600">Entertainment</div>
+                                <div class="font-medium">${event.entertainment}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 text-gray-700">
+                            <span class="text-indigo-600 mt-1">🍽️</span>
+                            <div>
+                                <div class="text-sm text-gray-600">Caterer</div>
+                                <div class="font-medium">${event.caterer}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${event.notes ? `
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                            <p class="text-sm text-gray-600 font-medium mb-1">Additional Notes:</p>
+                            <p class="text-gray-700">${event.notes}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
 
         function toggleForm() {
             const form = document.getElementById('submissionForm');
@@ -198,7 +460,12 @@
             events.push(newEvent);
             events.sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
             saveEvents();
-            renderEvents();
+            
+            if (currentView === 'calendar') {
+                renderCalendar();
+            } else {
+                renderEvents();
+            }
             
             // Clear form
             document.getElementById('clubName').value = '';
@@ -214,7 +481,14 @@
             if (confirm('Are you sure you want to delete this event?')) {
                 events = events.filter(e => e.id !== id);
                 saveEvents();
-                renderEvents();
+                if (currentView === 'calendar') {
+                    renderCalendar();
+                    if (selectedDate) {
+                        showDayEvents(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                    }
+                } else {
+                    renderEvents();
+                }
             }
         }
 
@@ -247,9 +521,11 @@
                         <div>
                             <h3 class="text-2xl font-bold text-gray-800">${event.clubName}</h3>
                         </div>
-                        <button onclick="deleteEvent(${event.id})" class="text-red-500 hover:text-red-700 transition" title="Delete event">
-                            🗑️
-                        </button>
+                        ${isAdmin ? `
+                            <button onclick="deleteEvent(${event.id})" class="text-red-500 hover:text-red-700 transition" title="Delete event">
+                                🗑️
+                            </button>
+                        ` : ''}
                     </div>
                     
                     <div class="flex items-center gap-2 text-gray-700 mb-4">
