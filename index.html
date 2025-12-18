@@ -375,24 +375,39 @@
         }
 
         async function loadEvents() {
-            const q = window.firestore.query(
-                window.firestore.collection(window.db, 'events'),
-                window.firestore.orderBy('eventDate'),
-                window.firestore.orderBy('eventTime')
-            );
-            
-            unsubscribe = window.firestore.onSnapshot(q, (snapshot) => {
-                events = [];
-                snapshot.forEach((doc) => {
-                    events.push({ id: doc.id, ...doc.data() });
-                });
+            try {
+                const q = window.firestore.query(
+                    window.firestore.collection(window.db, 'events')
+                );
                 
-                if (currentView === 'calendar') {
-                    renderCalendar();
-                } else {
-                    renderEvents();
-                }
-            });
+                unsubscribe = window.firestore.onSnapshot(q, (snapshot) => {
+                    events = [];
+                    snapshot.forEach((doc) => {
+                        events.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // Sort events by date and time
+                    events.sort((a, b) => {
+                        const dateCompare = a.eventDate.localeCompare(b.eventDate);
+                        if (dateCompare !== 0) return dateCompare;
+                        return a.eventTime.localeCompare(b.eventTime);
+                    });
+                    
+                    console.log('Loaded events:', events);
+                    
+                    if (currentView === 'calendar') {
+                        renderCalendar();
+                    } else {
+                        renderEvents();
+                    }
+                }, (error) => {
+                    console.error('Error loading events:', error);
+                    alert('Error loading events: ' + error.message);
+                });
+            } catch (error) {
+                console.error('Error setting up listener:', error);
+                alert('Error setting up event listener: ' + error.message);
+            }
         }
 
         async function submitEvent() {
