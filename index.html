@@ -376,17 +376,16 @@
 
         async function loadEvents() {
             try {
-                const q = window.firestore.query(
-                    window.firestore.collection(window.db, 'events')
-                );
+                // Simple query without orderBy to avoid needing an index
+                const eventsRef = window.firestore.collection(window.db, 'events');
                 
-                unsubscribe = window.firestore.onSnapshot(q, (snapshot) => {
+                unsubscribe = window.firestore.onSnapshot(eventsRef, (snapshot) => {
                     events = [];
                     snapshot.forEach((doc) => {
                         events.push({ id: doc.id, ...doc.data() });
                     });
                     
-                    // Sort events by date and time
+                    // Sort events by date and time in JavaScript
                     events.sort((a, b) => {
                         const dateCompare = a.eventDate.localeCompare(b.eventDate);
                         if (dateCompare !== 0) return dateCompare;
@@ -402,11 +401,11 @@
                     }
                 }, (error) => {
                     console.error('Error loading events:', error);
-                    alert('Error loading events: ' + error.message);
+                    alert('Error loading events. Please refresh the page.');
                 });
             } catch (error) {
                 console.error('Error setting up listener:', error);
-                alert('Error setting up event listener: ' + error.message);
+                alert('Error setting up event listener. Please refresh the page.');
             }
         }
 
